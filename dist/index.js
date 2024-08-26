@@ -12,39 +12,47 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const kafkajs_1 = require("kafkajs");
 const TOPIC_NAME = "mohit-zapier";
-// const PORT=26677
 const client = new client_1.PrismaClient();
 const kafka = new kafkajs_1.Kafka({
-    clientId: 'connect-shared-admin',
-    brokers: ['kafka-5f412cf-mohitahlawat912-244d.h.aivencloud.com:26666']
+    clientId: process.env.KAFKA_CLIENT_ID,
+    brokers: [process.env.KAFKA_BROKERS || ""],
+    ssl: {
+        rejectUnauthorized: false,
+    },
+    sasl: {
+        mechanism: 'scram-sha-256',
+        username: process.env.KAFKA_SASL_USERNAME || "",
+        password: process.env.KAFKA_SASL_PASSWORD || "",
+    },
 });
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const producer = kafka.producer();
         yield producer.connect();
-        while (1) {
+        while (true) {
             const pendingRows = yield client.zapRunOutbox.findMany({
                 where: {},
-                take: 10
+                take: 10,
             });
             console.log(pendingRows);
-            producer.send({
+            yield producer.send({
                 topic: TOPIC_NAME,
-                messages: pendingRows.map(r => {
-                    return {
-                        value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 })
-                    };
-                })
+                messages: pendingRows.map(r => ({
+                    value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 }),
+                })),
             });
             yield client.zapRunOutbox.deleteMany({
                 where: {
                     id: {
-                        in: pendingRows.map(x => x.id)
-                    }
-                }
+                        in: pendingRows.map(x => x.id),
+                    },
+                },
             });
             yield new Promise(r => setTimeout(r, 3000));
         }
     });
 }
-main();
+main().catch(e => {
+    console.error(`Error in main function: ${e.message}`);
+    process.exit(1);
+});
