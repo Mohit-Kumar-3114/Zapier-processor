@@ -1,20 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { Kafka } from "kafkajs";
 
-const TOPIC_NAME = "mohit-zapier";
+const TOPIC_NAME = "quickstart-events";
 const client = new PrismaClient();
 
 const kafka = new Kafka({
-    clientId: process.env.KAFKA_CLIENT_ID,
-    brokers: [process.env.KAFKA_BROKERS || ""],
-    ssl: {
-        rejectUnauthorized: false,
-    },
-    sasl: {
-      mechanism: 'scram-sha-256', 
-      username: process.env.KAFKA_SASL_USERNAME ||"",
-      password: process.env.KAFKA_SASL_PASSWORD ||"",
-    },
+    clientId: "outbox proccessor",
+    brokers: ["localhost:9092"],
   });
 
 async function main() {

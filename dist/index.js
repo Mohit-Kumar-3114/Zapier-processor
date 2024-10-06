@@ -11,19 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const kafkajs_1 = require("kafkajs");
-const TOPIC_NAME = "mohit-zapier";
+const TOPIC_NAME = "quickstart-events";
 const client = new client_1.PrismaClient();
 const kafka = new kafkajs_1.Kafka({
-    clientId: process.env.KAFKA_CLIENT_ID,
-    brokers: [process.env.KAFKA_BROKERS || ""],
-    ssl: {
-        rejectUnauthorized: false,
-    },
-    sasl: {
-        mechanism: 'scram-sha-256',
-        username: process.env.KAFKA_SASL_USERNAME || "",
-        password: process.env.KAFKA_SASL_PASSWORD || "",
-    },
+    clientId: "outbox proccessor",
+    brokers: ["localhost:9092"],
 });
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
